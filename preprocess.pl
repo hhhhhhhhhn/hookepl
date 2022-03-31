@@ -1,6 +1,15 @@
-:- module(preprocess, [splitIntoWords/3, kShingle/3]).
+:- module(preprocess, [splitIntoWords/3, kShingle/3, removeStopWords/3, preprocess/4]).
+
+:- use_module(library(snowball)).
+
+preprocess(Language, K, Chars, Preprocessed) :-
+	splitIntoWords(Language, Chars, WordsWithStopWords),
+	removeStopWords(Language, WordsWithStopWords, Words),
+	maplist(snowball(Language), Words, Stemmed),
+	kShingle(K, Stemmed, Preprocessed).
 
 wordCharacters(english, [a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z]).
+stopWords(english, [[i,s],[t,h,e],[a],[t,h,e,y]]).
 
 isWordCharacter(Language, Character) :-
 	wordCharacters(Language, ValidCharacters),
@@ -50,3 +59,9 @@ range(Start, End, List) :-
 	range(NextStart, End, TailList),
 	append([Start], TailList, List).
 
+removeStopWords(Language, Words, Result) :-
+	exclude(isStopWord(Language), Words, Result).
+
+isStopWord(Language, Word) :-
+	stopWords(Language, LanguageStopWords),
+	member(Word, LanguageStopWords).
